@@ -81,7 +81,14 @@ async function pollAndRespond() {
   try {
     const res = await fetchConversations();
 
-    console.log("Bonzo API response:", res); // Debug log
+    response.data.data.forEach((contact) => {
+  console.log("Bonzo API response:", {
+    name: contact.full_name,
+    phone: contact.phone,
+    message: contact.last_incoming_message?.text || 'No recent message',
+    timestamp: contact.last_incoming_message?.created_at || 'N/A'
+  });
+});
 
     const conversations = Array.isArray(res)
       ? res
