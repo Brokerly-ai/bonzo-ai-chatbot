@@ -4,7 +4,7 @@ const fetch = require('node-fetch');
 const https = require('https');
 const app = express();
 
-// TLS config to prevent SSL error
+// Force modern TLS settings to prevent SSL errors
 const agent = new https.Agent({
   minVersion: 'TLSv1.2',
   maxVersion: 'TLSv1.3',
@@ -13,11 +13,10 @@ const agent = new https.Agent({
 
 const BONZO_TOKEN = process.env.BONZO_TOKEN;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const POLLING_INTERVAL = 60000; // 60 seconds
+const POLLING_INTERVAL = 60000; // Every 60 seconds
 
 const SYSTEM_PROMPT = `You’re a helpful mortgage chatbot. Answer basic questions about DSCR loans and collect loan amount, property value, and rental income. Escalate to a real LO if the user wants a call.`;
 
-// ✅ Corrected Bonzo API Base URL
 const BONZO_API_BASE = 'https://app.getbonzo.com/api/v3';
 
 async function fetchConversations() {
@@ -80,7 +79,8 @@ let lastMessageIds = {};
 
 async function pollAndRespond() {
   try {
-    const conversations = await fetchConversations();
+    const res = await fetchConversations();
+    const conversations = Array.isArray(res) ? res : res.data;
 
     for (const convo of conversations) {
       const chatRoomId = convo.id;
@@ -101,7 +101,7 @@ async function pollAndRespond() {
   }
 }
 
-// Poll every 60 seconds
+// Poll Bonzo every 60 seconds
 setInterval(pollAndRespond, POLLING_INTERVAL);
 
 // Health check endpoint
@@ -111,5 +111,3 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
-
