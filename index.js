@@ -4,7 +4,7 @@ const fetch = require('node-fetch');
 const https = require('https');
 const app = express();
 
-// Force modern TLS settings to prevent SSL errors
+// Force secure TLS for Render SSL compatibility
 const agent = new https.Agent({
   minVersion: 'TLSv1.2',
   maxVersion: 'TLSv1.3',
@@ -13,7 +13,7 @@ const agent = new https.Agent({
 
 const BONZO_TOKEN = process.env.BONZO_TOKEN;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const POLLING_INTERVAL = 60000; // Every 60 seconds
+const POLLING_INTERVAL = 60000; // 60 seconds
 
 const SYSTEM_PROMPT = `You’re a helpful mortgage chatbot. Answer basic questions about DSCR loans and collect loan amount, property value, and rental income. Escalate to a real LO if the user wants a call.`;
 
@@ -80,7 +80,18 @@ let lastMessageIds = {};
 async function pollAndRespond() {
   try {
     const res = await fetchConversations();
-    const conversations = Array.isArray(res) ? res : res.data;
+
+    console.log("Bonzo API response:", res); // Debug log
+
+    const conversations = Array.isArray(res)
+      ? res
+      : Array.isArray(res.data)
+        ? res.data
+        : [];
+
+    if (!Array.isArray(conversations)) {
+      throw new Error('Conversations response is not an array.');
+    }
 
     for (const convo of conversations) {
       const chatRoomId = convo.id;
